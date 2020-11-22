@@ -1,85 +1,58 @@
-import React, {useState, useEffect, useRef, useLayoutEffect } from "react";
-import { useForm } from "./useForms";
-import { Hello } from './Hello.js'
+import React, { useState, useCallback, useMemo } from "react";
+import { Hello } from'./Hello';
+import { Square } from'./Square';
+import { useFetch } from './useFetch'; 
 import './App.css';
-import { useMeasure } from "./useMeasure";
+
 
 //only with function
 function App() {
-  //10 is intial val or have function to return inital val if computation is
-  //expensives
-  //can have as many setCounts
-  const [values,handleChange] = useForm({email: "", password: '', firstName: ""});
-  //value of pw and email are from the state
-  //useForms is a spcial casing
+  const [count, setCount] = useState(0);
+  const numArray = [7, 21, 37];
+  const {data} = useFetch('https://api.kanye.rest/');
 
-  const [showHello, setShowHello] = useState(true);
-
-  const [rect, inputRef2] = useMeasure();
-  //every time this component rerender, this render
-  //only whenever I want to change pw or email change
-  useEffect(() => {
-    //console.log("wow pw or email changed");
-    // const onMouseMove = e => {
-    //   console.log(e)
-    // }
-    //window.addEventListener('mousemove', onMouseMove);
-
-    //clean up fucnction
-    //same as class' unmount and we clean up old value
-    return() => {
-      //console.log("unmount");
-      //window.removeEventListener('mousemove', onMouseMove)
+  const computeLongestWord = useCallback((arr) =>  {
+    if (!arr) {
+      return [];
     }
-  }, [values.email , values.password]);
 
-
-  //Fire in the written order
-  useEffect(() => {
-    //console.log(1);
-  });
-
-  useEffect(() => {
-    //console.log(2);
-  });
-
-  //const[count, setCount] = useState(0);
-  //would work for object and arrays...
-  // const[count, setCount] = useState(() => JSON.parse(localStorage.getItem("count")));
-  // const {data, loading} = useFetch(`http://numbersapi.com/${count}/trivia`);
-  const inputRef = useRef([]);
-
-  //treat it as a field or instants variables opposed to you would store in state
-  const hello = useRef(() => {
-    console.log("Hello");
-  })
-
-  // useEffect(() => {
-  //   localStorage.setItem("count", JSON.stringify(count));
-  // }, [count]);
-
-  // measurement of DOM Node
-  useLayoutEffect(() => {
-      console.log(inputRef.current.getBoundingClientRect());
+    let longestWord = arr.quote;
+    //general idea something like this, something is wrong 
+    // (arr.quote).forEach(sentence => 
+    //   sentence.split(" ").forEach(word => {
+    //     if (word.length > longestWord.length) {
+    //       longestWord = word;
+    //     }
+    // }));
+    return longestWord;
   }, []);
 
+  const longestWord = useMemo(() => computeLongestWord(data), [data, computeLongestWord])
+
+  //CASE for Callback1
+  //when count or setCount cahnges, the function will be recreated
+  //only called one initalization 
+  //as the function never change so it won't rerender
+  //when you use memo
+  const increment = useCallback( 
+   n => {setCount(count => count + n);},
+    [setCount]
+  );
+
+  //CASE for callback2-> useEffect
   return (
     <div>
-      <button onClick={() => setShowHello(!showHello)}>toggle</button>
-      {showHello && 
-        <div>
-        <Hello></Hello>
-        </div>}
-      <input ref={inputRef2} name='firstName' value={values.firstName} onChange={handleChange} placeholder="firstName" />
-      <input ref={inputRef} name='email' value={values.email} onChange={handleChange} />
-      <input type='password' name='password' value={values.password} onChange={handleChange} />
-      {/* get the value -> get value by  inputRef.current*/}
-      {/* focus -> highlight the box*/}
-      {/* access if the hello exists as a component */}
-      <button onClick={() => 
-        {console.log(inputRef.current.focus());
-                    hello.current();}}> focus 
-      </button>
+      {/* everytime the app is rendered, the increment function is newly created */}
+        <Hello increment={increment} />
+        {count}
+        {/* the call back prevents unnecessay rerender everytime, just update count */}
+        {/* whenever mapping, we can use call back and prevent new creation every iteration */}
+        {numArray.map(n => {
+          return(
+            <Square increment={increment} num={n} key={n} />
+          )
+        })}
+        <div>{longestWord}</div>
     </div>
   );
 }

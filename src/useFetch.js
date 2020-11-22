@@ -18,10 +18,14 @@ export const useFetch = (url) => {
             {data: state.data, loading: true}
             ));
         fetch(url)
-        .then(input => input.text())
+        .then(input => input.json())
         .then(input => {
-            if (isCurrent.current) {
-                setState({data: input, loading: false});  
+            try {
+                if (isCurrent.current) {
+                    setState({data: input, loading: false});  
+                }
+            } catch(err) {
+                console.log(err);
             }
         });
         //u can add function as dependency
